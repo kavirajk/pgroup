@@ -21,7 +21,8 @@ Maintain two list of peers.
 
 If Failure Detectors marks some peers to be failed, it moves it from active to failed, and ask Dissemination to announce via IP multicast.
 
-# v0.01 (Failure - IP multicast is so hard to make it work on GCP cloud. Its is disabled by default. infact not even supported. https://cloud.google.com/vpc/docs/vpc#specifications)
+# v0.01 (Failure)
+- IP multicast is so hard to make it work on GCP cloud(the one I use to test). Its is disabled by default. infact not even supported. https://cloud.google.com/vpc/docs/vpc#specifications
 
 ## Membership management only via IP multicast
 - Each peers have both IP multicast sender and reciver.
@@ -58,7 +59,7 @@ Basically, doing single round of protocol period.
 
 ## No Membership management
 - Meaning every peer will start with its own seed peers and just detect failures of those peers only.
-No peer is aware of other peers newly joining or voluntary leaving.
+- No peer is aware of other peers newly joining or voluntary leaving.
 
 ## Rough Design
 - Start each peer with its own seed peers

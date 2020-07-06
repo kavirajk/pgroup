@@ -1,13 +1,16 @@
+use bincode;
 use crossbeam_channel::Receiver;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::net::{SocketAddr, UdpSocket};
+use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 
+#[derive(Debug)]
 struct Group {
     me: Node,
     peers: HashMap<String, Node>,
 
     // ack for specific ping's seq_no.
-    ack_handlers: HashMap<usize, Receiver<Packet>>,
+    ack_handlers: HashMap<u32, Receiver<Packet>>,
 }
 
 impl Group {
@@ -35,8 +38,8 @@ impl Group {
         let pkt = decode_packet(&buf).unwrap();
 
         match pkt {
-            Packet::Ping => {}
-            Packet::Ack => {}
+            Packet::Ping { from, seq_no } => if self.ack_handlers.contains_key(&seq_no) {},
+            Packet::Ack { from, seq_no } => {}
             Packet::PingReq => {}
             Packet::IndirectAck => {}
             _ => {}
@@ -44,8 +47,15 @@ impl Group {
 
         Ok(())
     }
+
+    fn send<T: ToSocketAddrs>(sock: &UdpSocket, msg: Vec<u8>, to: T) -> std::io::Result<usize> {
+        sock.send_to(&msg, to)
+    }
+
+    fn encode_and_send() {}
 }
 
+#[derive(Debug)]
 struct Node {
     name: String,
     seq_no: u64,
@@ -65,15 +75,17 @@ impl Node {
     }
 }
 
+#[derive(Debug)]
 enum NodeState {
     Alive,
     Dead,
     Suspect,
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 enum Packet {
-    Ping,
-    Ack,
+    Ping { from: String, seq_no: u32 },
+    Ack { from: String, seq_no: u32 },
     PingReq,
     IndirectAck,
     Alive,
@@ -82,10 +94,26 @@ enum Packet {
     Failed,
 }
 
-fn encode_packet(pkt: Packet) -> Result<Vec<u8>, String> {
-    unimplemented!()
+fn encode_packet(pkt: &Packet) -> Result<Vec<u8>, String> {
+    let buf = bincode::serialize(pkt).unwrap();
+    Ok(buf)
 }
 
 fn decode_packet(buf: &[u8]) -> Result<Packet, String> {
-    unimplemented!()
+    let pkt: Packet = bincode::deserialize(buf).unwrap();
+    Ok(pkt)
+}
+
+#[test]
+fn test_encode_decode() {
+    let before = Packet::Ping {
+        from: "me".to_owned(),
+        seq_no: 1234,
+    };
+
+    let buf = encode_packet(&before).unwrap();
+
+    let after = decode_packet(&buf).unwrap();
+
+    assert_eq!(before, after);
 }

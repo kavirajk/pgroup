@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 crossbeam-channel = "0.4.2"
+serde = { version = "1.0.110", features= ["derive"] }
+bincode = "1.2.1"
